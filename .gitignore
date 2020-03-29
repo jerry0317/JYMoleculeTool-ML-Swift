@@ -88,3 +88,23 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+# SPM
+
+.build
+DerivedData
+/.previous-build
+xcuserdata
+.DS_Store
+*~
+\#*
+.\#*
+.*.sw[nop]
+*.xcscmblueprint
+/default.profraw
+*.xcodeproj
+Utilities/Docker/*.tar.gz
+.swiftpm
+Package.resolved
+/build
+*.pyc
