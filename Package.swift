@@ -17,6 +17,6 @@ let package = Package(
     targets: [
         .target(
             name: "JYMT-ML-StructureFinder",
-            dependencies: ["JYMTBasicKit", "JYMTAdvancedKit"])
+            dependencies: ["JYMTBasicKit"])
     ]
 )
