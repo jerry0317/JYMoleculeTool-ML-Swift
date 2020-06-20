@@ -21,16 +21,6 @@ import TensorFlow
 
 printWelcomeBanner("Structure Finder w/ ML")
 
-//// Import RDKit
-//guard let rdkit = try? Python.attemptImport("rdkit") else {
-//    fatalError("RDKit not found. Please set the environment variable PYTHON_LIBRARY to the Python path that is able to import RDKit.")
-//}
-//
-//print("RDKit successfully imported.")
-
-//let X = Tensor<Double>([[1,2,3], [1,5,6], [7,8,9]])
-//print(X.count(1))
-
 let sys = Python.import("sys")
 
 guard let xyz2mol = try? Python.attemptImport("xyz2mol") else {
@@ -46,22 +36,17 @@ guard let xyz2mol = try? Python.attemptImport("xyz2mol") else {
 }
 
 var (xyzSet, fileName) = xyzFileInput()
+print()
+
+var (saveResults, writePath) = exportingPathInput("csv")
+print()
 
 let rawAtoms = xyzSet.atoms!
 
 let combAtoms = rawAtoms.removed(byElement: .hydrogen)
 
-//var (saveResults, writePath) = exportingPathInput("xyz & mol")
-
 let xyzString = XYZFile(fromAtoms: combAtoms).xyzString!
 let correctSmiles = String(xyz2mol.xyz2smiles(xyzString))!
-
-
-//var possibleAtoms = [[rawAtoms[0]]]
-//
-//for i in 1..<rawAtoms.count {
-//    possibleAtoms.append(rawAtoms[i].possibles)
-//}
 
 let A1 = selectFarthestAtom(from: combAtoms) ?? rawAtoms[0]
 print()
@@ -86,18 +71,48 @@ print("**Structure Filtering completed.**")
 print()
 
 var possibleSmiles = [String]()
+var smilesNTruths = [Dictionary<String, AnyObject>]()
 
 
 for psMol in possibleList {
-    possibleSmiles.append(String(xyz2mol.xyz2smiles(XYZFile(fromAtoms: Array(psMol.atoms)).xyzString!))!)
+    let smiles = String(xyz2mol.xyz2smiles(XYZFile(fromAtoms: Array(psMol.atoms)).xyzString!))!
+    possibleSmiles.append(smiles)
 }
+
+let uniqueSmiles = Set(possibleSmiles)
+
+for uSmiles in uniqueSmiles {
+    var dict = Dictionary<String, AnyObject>()
+    dict["SMILES"] = uSmiles as AnyObject
+    dict["Validity"] = (uSmiles == correctSmiles ? 1 : 0) as AnyObject
+    smilesNTruths.append(dict)
+}
+
+let header = ["SMILES", "Validity"]
+
+func createCSVString(header: [String], data: [Dictionary<String, AnyObject>], nilString: String = "N/A") -> String {
+    var csvStr = header.joined(separator: ",") + "\n"
+    for dict in data {
+        csvStr += header.map({String(describing: dict[$0] ?? nilString as AnyObject)}).joined(separator: ",") + "\n"
+    }
+    return csvStr
+}
+
+if saveResults {
+    var csvFile = TextFile()
+    csvFile.content = createCSVString(header: header, data: smilesNTruths)
+    let csvUrl = writePath.appendingPathComponent("result_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
+    csvFile.safelyExport(toFile: csvUrl)
+}
+
+//print(createCSVString(header: header, data: smilesNTruths))
 
 print()
 print("Correct SMILES: \(correctSmiles)")
 print("Total number of filtered structures: \(possibleList.count)")
-print("Total number of SMILES: \(Set(possibleSmiles).count)")
+print("Total number of SMILES: \(uniqueSmiles.count)")
 print("Number of strutures with correct SMILES: \(possibleSmiles.filter({$0 == correctSmiles}).count)")
-print("Possible SMILES (first 5): \(Array(Set(possibleSmiles)).prefix(5)) ...")
+print("Possible SMILES (first 5): \(Array(uniqueSmiles).prefix(5)) ...")
 
 let smilesTimeTaken = -(Double(tInitial.timeIntervalSinceNow)) - strTimeTaken
 
