@@ -19,14 +19,15 @@ printWelcomeBanner("Structure Finder w/ ML")
 
 public let xyz2mol = importXyz2mol()
 
-var (xyzSet, fileName) = xyzFileInput()
+var (xyzFiles, fileNames) = xyzFilesInput()
+print("Successfully imported: \(fileNames.joined(separator: ",")).")
 print()
 
 var (saveResults, writePath) = exportingPathInput("csv")
 print()
 
 let tInitial = Date()
-let snt = sntData(from: xyzSet)
+let snt = xyzFiles.flatMap({sntData(from: $0)})
 
 if saveResults {
     var csvFile = TextFile()
