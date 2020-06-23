@@ -17,24 +17,21 @@ import TensorFlow
 
 printWelcomeBanner("Structure Finder w/ ML")
 
-public let xyz2mol = importXyz2mol()
+internal let xyz2mol = importXyz2mol()
 
 var (xyzFiles, fileNames) = xyzFilesInput()
 print("Successfully imported: \(fileNames.joined(separator: ",")).")
 print()
 
-var (saveResults, writePath) = exportingPathInput("csv")
+var (_, writePath) = exportingPathInput("csv", isOptional: false)
 print()
 
 let tInitial = Date()
-let snt = xyzFiles.flatMap({sntData(from: $0)})
 
-if saveResults {
-    var csvFile = TextFile()
-    csvFile.content = createCSVString(header: ["SMILES", "Validity"], data: snt)
-    let csvUrl = writePath.appendingPathComponent("result_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
-    csvFile.safelyExport(toFile: csvUrl, affix: "csv")
-}
+let snt = xyzFiles.flatMap({sntAction(from: $0)})
+let csvUrl = writePath.appendingPathComponent("result_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
+
+exportCsvFile(from: snt, to: csvUrl)
 
 let timeTaken = -(Double(tInitial.timeIntervalSinceNow))
 

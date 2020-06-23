@@ -9,7 +9,5 @@ import Foundation
 import JYMTBasicKit
 import TensorFlow
 
-func numOfAtoms(_ smiles: String) -> Int {
-    return smiles.filter({$0.isUppercase}).count
-}
-
+internal let supportedElements: Set<ChemElement> = [.hydrogen, .carbon, .oxygen, .nitrogen, .fluorine, .chlorine]
+internal typealias SNTData = [Dictionary<String, AnyObject>]

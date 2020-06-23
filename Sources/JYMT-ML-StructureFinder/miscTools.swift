@@ -68,10 +68,10 @@ func findPossibleSmiles(from atoms: [Atom], rcsFilters: Set<StrcFilter> = [.mini
     return Set(possibleSmiles)
 }
 
-func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> [Dictionary<String, AnyObject>] {
-    var smilesNTruths = [Dictionary<String, AnyObject>]()
+func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> [SNTData] {
+    var smilesNTruths = [SNTData]()
     for uSmiles in uniqueSmiles {
-        var dict = Dictionary<String, AnyObject>()
+        var dict = SNTData()
         dict["SMILES"] = uSmiles as AnyObject
         dict["Validity"] = (uSmiles == correctSmiles ? 1 : 0) as AnyObject
         smilesNTruths.append(dict)
@@ -79,9 +79,19 @@ func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> [Diction
     return smilesNTruths
 }
 
-func sntData(from xyzSet: XYZFile, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [Dictionary<String, AnyObject>] {
+func sntAction(from xyzSet: XYZFile, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [SNTData] {
     let atoms = nonHAtoms(from: xyzSet)
+    guard Set(atoms.map({$0.element})).isSubset(of: supportedElements) else {
+        print("Found unsupported element. Data set neglected.")
+        return []
+    }
     let correctSmiles = findCorrectSmiles(from: atoms)
     let uniqueSmiles = findPossibleSmiles(from: atoms, rcsFilters: rcsFilters)
     return smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles)
+}
+
+func exportCsvFile(from snt: SNTData, to csvUrl: URL) {
+    var csvFile = TextFile()
+    csvFile.content = createCSVString(header: ["SMILES", "Validity"], data: snt)
+    csvFile.safelyExport(toFile: csvUrl, affix: "csv")
 }
