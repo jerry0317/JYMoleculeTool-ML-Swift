@@ -35,7 +35,7 @@ func nonHAtoms(from xyzSet: XYZFile) -> [Atom] {
     return combAtoms
 }
 
-func findCorrectSmiles(from atoms: [Atom]) -> String {
+func findCorrectSmiles(from atoms: [Atom], xyz2mol: PythonObject) -> String {
     guard !atoms.isEmpty else {
         return ""
     }
@@ -45,7 +45,7 @@ func findCorrectSmiles(from atoms: [Atom]) -> String {
     return correctSmiles
 }
 
-func findPossibleSmiles(from atoms: [Atom], rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> Set<String> {
+func findPossibleStructures(from atoms: [Atom], cache: inout GlobalCache, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [StrcMolecule] {
     guard !atoms.isEmpty else {
         return []
     }
@@ -57,10 +57,14 @@ func findPossibleSmiles(from atoms: [Atom], rcsFilters: Set<StrcFilter> = [.mini
 
     var possibleList: [StrcMolecule] = []
     
-    possibleList = rcsActionDynProgrammed(rAtoms: combrAtoms, stMolList: [initialSMol], filters: rcsFilters)
+    possibleList = rcsActionDynProgrammed(rAtoms: combrAtoms, stMolList: [initialSMol], filters: rcsFilters, cache: &cache)
     
+    return possibleList
+}
+
+func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObject) -> Set<String> {
     var possibleSmiles = [String]()
-    for psMol in possibleList {
+    for psMol in strcMolecules {
         let smiles = String(xyz2mol.xyz2smiles(XYZFile(fromAtoms: Array(psMol.atoms)).xyzString!))!
         possibleSmiles.append(smiles)
     }
@@ -79,18 +83,38 @@ func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> [SNTData
     return smilesNTruths
 }
 
-func sntAction(from xyzSet: XYZFile, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [SNTData] {
-    let atoms = nonHAtoms(from: xyzSet)
-    guard Set(atoms.map({$0.element})).isSubset(of: supportedElements) else {
-        print("Found unsupported element. Data set neglected.")
-        return []
-    }
-    let correctSmiles = findCorrectSmiles(from: atoms)
-    let uniqueSmiles = findPossibleSmiles(from: atoms, rcsFilters: rcsFilters)
-    return smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles)
+func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 4, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [SNTData] {
+    var snt = [SNTData]()
+    let serialQueue = DispatchQueue(label: "SerialQueue")
+    let xyzChunked = xyzSets.chunked(by: chunkSize)
+    DispatchQueue.concurrentPerform(iterations: chunkSize, execute: { i in
+        var xyzChunk = [XYZFile]()
+        serialQueue.sync {
+            xyzChunk = xyzChunked[i]
+        }
+        
+        for xyzSet in xyzChunk {
+            let atoms = nonHAtoms(from: xyzSet)
+            guard Set(atoms.map({$0.element})).isSubset(of: supportedElements) else {
+                print("Found unsupported element. Data set neglected.")
+                continue
+            }
+            var correctSmiles = ""
+            var uniqueSmiles = Set<String>()
+            var gCache = GlobalCache()
+            let possibleStructures = findPossibleStructures(from: atoms, cache: &gCache)
+            serialQueue.sync {
+                correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
+                uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
+                snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
+            }
+        }
+    })
+    
+    return snt
 }
 
-func exportCsvFile(from snt: SNTData, to csvUrl: URL) {
+func exportCsvFile(from snt: [SNTData], to csvUrl: URL) {
     var csvFile = TextFile()
     csvFile.content = createCSVString(header: ["SMILES", "Validity"], data: snt)
     csvFile.safelyExport(toFile: csvUrl, affix: "csv")

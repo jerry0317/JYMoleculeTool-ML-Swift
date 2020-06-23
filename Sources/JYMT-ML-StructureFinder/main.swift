@@ -26,9 +26,11 @@ print()
 var (_, writePath) = exportingPathInput("csv", isOptional: false)
 print()
 
+let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN))
+
 let tInitial = Date()
 
-let snt = xyzFiles.flatMap({sntAction(from: $0)})
+let snt = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads)
 let csvUrl = writePath.appendingPathComponent("result_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
 
 exportCsvFile(from: snt, to: csvUrl)
