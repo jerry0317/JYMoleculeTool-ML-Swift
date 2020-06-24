@@ -38,7 +38,3 @@ def molobj2features(mol):
     }
 
     return result
-
-mol1 = oechem.OEGraphMol()
-oechem.OESmilesToMol(mol1, 'C[C@@H](CO)O')
-print(molobj2features(mol1))
