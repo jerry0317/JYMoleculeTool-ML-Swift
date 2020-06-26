@@ -12,7 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 TEST_RATIO = 0.15
-NUM_FEATURES = 3
+FEATURES = ["numAtoms", "numBonds", "numGroups"]
+NUM_FEATURES = len(FEATURES)
 
 def input_csv_reader():
     hold = True
@@ -48,11 +49,7 @@ def sample_indices(len, test_ratio):
     return train_indices, test_indices
 
 def extract_features(dict):
-    return np.array([
-        dict["numAtoms"],
-        dict["numBonds"],
-        dict["numGroups"]
-    ])
+    return np.array([dict[f] for f in FEATURES])
 
 raw_smiles, raw_labels = import_from_csv(input_csv_reader())
 
