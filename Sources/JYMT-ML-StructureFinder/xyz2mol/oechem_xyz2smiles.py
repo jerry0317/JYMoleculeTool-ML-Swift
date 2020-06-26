@@ -28,13 +28,18 @@ def molobj2features(mol):
     numAtoms = mol.NumAtoms()
     numBonds = mol.NumBonds()
     numGroups = mol.NumGroups()
+    oechem.OEAssignAromaticFlags(mol)
+    numAromaticAtoms = len(list(mol.GetAtoms(oechem.OEIsAromaticAtom())))
+    numAromaticBonds = len(list(mol.GetBonds(oechem.OEIsAromaticBond())))
 
     result = {
         "SMILES": smiles,
         # "dimension": dimension,
         "numAtoms": numAtoms,
         "numBonds": numBonds,
-        "numGroups": numGroups
+        "numGroups": numGroups,
+        "numAromaticAtoms": numAromaticAtoms,
+        "numAromaticBonds": numAromaticBonds
     }
 
     return result

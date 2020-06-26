@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 TEST_RATIO = 0.15
-FEATURES = ["numAtoms", "numBonds", "numGroups"]
+FEATURES = ["numAtoms", "numBonds", "numGroups", "numAromaticAtoms", "numAromaticBonds"]
 NUM_FEATURES = len(FEATURES)
 
 def input_csv_reader():
@@ -35,7 +35,7 @@ def import_from_csv(reader):
     for row in reader:
         if line_count > 0:
             smiles_list.append(row[0])
-            validity_list.append(row[1])
+            validity_list.append(int(row[1]))
         line_count += 1
     print(f'Processed {line_count} lines.')
     return smiles_list, validity_list
@@ -53,6 +53,10 @@ def extract_features(dict):
     return np.array([dict[f] for f in FEATURES])
 
 raw_smiles, raw_labels = import_from_csv(input_csv_reader())
+
+positive_rate = len(list(filter(lambda x: x == 1, raw_labels))) / len(raw_labels)
+print("Positive rate: ", positive_rate)
+print("Negative rate: ", 1 - positive_rate)
 
 train_indices, test_indices = sample_indices(len(raw_smiles), TEST_RATIO)
 
@@ -72,7 +76,8 @@ for j, i_te in enumerate(test_indices):
     test_labels[j] = raw_labels[i_te]
 
 model = keras.Sequential([
-    keras.layers.Dense(32, activation='relu'),
+    keras.layers.Dense(8, activation="relu"),
+    keras.layers.Dense(8, activation="relu"),
     keras.layers.Dense(2)
 ])
 
