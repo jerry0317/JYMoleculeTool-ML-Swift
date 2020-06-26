@@ -3,6 +3,7 @@ import random
 
 import xyz2mol
 
+## Some code referenced from Tensorflow Tutorial code: https://www.tensorflow.org/tutorials/keras/classification
 # TensorFlow and tf.keras
 import tensorflow as tf
 from tensorflow import keras
@@ -69,3 +70,18 @@ for j, i_tr in enumerate(train_indices):
 for j, i_te in enumerate(test_indices):
     test_features[j, :] = extract_features(raw_features[i_te])
     test_labels[j] = raw_labels[i_te]
+
+model = keras.Sequential([
+    keras.layers.Dense(32, activation='relu'),
+    keras.layers.Dense(2)
+])
+
+model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
+
+model.fit(train_features, train_labels, epochs=10)
+print()
+
+test_loss, test_acc = model.evaluate(test_features,  test_labels, verbose=2)
+print('\nTest accuracy:', test_acc)
