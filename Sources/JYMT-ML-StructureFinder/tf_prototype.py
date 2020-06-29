@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 TEST_RATIO = 0.15
-FEATURES = ["numAtoms", "numBonds", "numGroups", "numAromaticAtoms", "numAromaticBonds"]
+FEATURES = ["numAtoms", "numBonds", "numGroups", "numAromaticAtoms", "numAromaticBonds", "numInRingAtoms", "numInRingBonds"]
 NUM_FEATURES = len(FEATURES)
 
 def input_csv_reader():
