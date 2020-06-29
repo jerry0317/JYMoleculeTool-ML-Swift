@@ -14,7 +14,19 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 
 TEST_RATIO = 0.15
-FEATURES = ["numAtoms", "numBonds", "numGroups", "numAromaticAtoms", "numAromaticBonds", "numInRingAtoms", "numInRingBonds"]
+FEATURES = [
+"numAtoms",
+"numBonds",
+"numGroups",
+"numAromaticAtoms",
+"numAromaticBonds",
+"numInRingAtoms",
+"numInRingBonds",
+"numOfSingleBonds",
+"numOfDoubleBonds",
+"numOfTripleBonds",
+"numOfQuadrupleBonds"
+]
 NUM_FEATURES = len(FEATURES)
 
 def input_csv_reader():
@@ -68,6 +80,8 @@ test_labels = np.zeros(len(test_indices), dtype=np.uint8)
 
 raw_features = list(map(xyz2mol.smiles2features, raw_smiles))
 
+# print(raw_features[:10])
+
 for j, i_tr in enumerate(train_indices):
     train_features[j, :] = extract_features(raw_features[i_tr])
     train_labels[j] = raw_labels[i_tr]
@@ -97,5 +111,5 @@ probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
 predictions = probability_model.predict(test_features)
 
 test_pred = np.array(list(map(np.argmax, predictions)))
-print(test_pred[:10])
+
 print(classification_report(test_labels, test_pred))

@@ -36,6 +36,22 @@ def molobj2features(mol):
     numInRingAtoms = len(list(mol.GetAtoms(oechem.OEAtomIsInRing())))
     numInRingBonds = len(list(mol.GetBonds(oechem.OEBondIsInRing())))
 
+    numOfSingleBonds = 0
+    numOfDoubleBonds = 0
+    numOfTripleBonds = 0
+    numOfQuadrupleBonds = 0
+
+    for bond in mol.GetBonds():
+        order = bond.GetOrder()
+        if order == 1:
+            numOfSingleBonds += 1
+        elif order == 2:
+            numOfDoubleBonds += 1
+        elif order == 3:
+            numOfTripleBonds += 1
+        elif order == 4:
+            numOfQuadrupleBonds += 1
+
     result = {
         "SMILES": smiles,
         # "dimension": dimension,
@@ -45,7 +61,11 @@ def molobj2features(mol):
         "numAromaticAtoms": numAromaticAtoms,
         "numAromaticBonds": numAromaticBonds,
         "numInRingAtoms": numInRingAtoms,
-        "numInRingBonds": numInRingBonds
+        "numInRingBonds": numInRingBonds,
+        "numOfSingleBonds": numOfSingleBonds,
+        "numOfDoubleBonds": numOfDoubleBonds,
+        "numOfTripleBonds": numOfTripleBonds,
+        "numOfQuadrupleBonds": numOfQuadrupleBonds
     }
 
 
