@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report
 
 TEST_RATIO = 0.15
+
 FEATURES = [
 "numAtoms",
 "numBonds",
@@ -26,6 +27,8 @@ FEATURES = [
 "numOfDoubleBonds",
 "numOfTripleBonds",
 "numOfQuadrupleBonds"
+] + [
+"numsOfAtomWithImplicitHCount" + str(k) for k in range(9)
 ]
 NUM_FEATURES = len(FEATURES)
 
@@ -80,7 +83,7 @@ test_labels = np.zeros(len(test_indices), dtype=np.uint8)
 
 raw_features = list(map(xyz2mol.smiles2features, raw_smiles))
 
-# print(raw_features[:10])
+# print(raw_features[:1])
 
 for j, i_tr in enumerate(train_indices):
     train_features[j, :] = extract_features(raw_features[i_tr])

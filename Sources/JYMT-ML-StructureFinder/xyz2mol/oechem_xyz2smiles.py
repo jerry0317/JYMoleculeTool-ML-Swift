@@ -36,6 +36,8 @@ def molobj2features(mol):
     numInRingAtoms = len(list(mol.GetAtoms(oechem.OEAtomIsInRing())))
     numInRingBonds = len(list(mol.GetBonds(oechem.OEBondIsInRing())))
 
+    oechem.OEAssignImplicitHydrogens(mol)
+
     numOfSingleBonds = 0
     numOfDoubleBonds = 0
     numOfTripleBonds = 0
@@ -51,6 +53,14 @@ def molobj2features(mol):
             numOfTripleBonds += 1
         elif order == 4:
             numOfQuadrupleBonds += 1
+
+    numsOfAtomWithImplicitHCount = dict()
+
+    for k in range(9):
+        numsOfAtomWithImplicitHCount[k] = 0
+
+    for atom in mol.GetAtoms():
+        numsOfAtomWithImplicitHCount[atom.GetImplicitHCount()] += 1
 
     result = {
         "SMILES": smiles,
@@ -68,7 +78,8 @@ def molobj2features(mol):
         "numOfQuadrupleBonds": numOfQuadrupleBonds
     }
 
-
+    for k in range(9):
+        result["numsOfAtomWithImplicitHCount" + str(k)] = numsOfAtomWithImplicitHCount[k]
 
     return result
 
