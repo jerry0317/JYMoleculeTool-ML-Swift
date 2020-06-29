@@ -11,6 +11,7 @@ from tensorflow import keras
 # Helper libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.metrics import classification_report
 
 TEST_RATIO = 0.15
 FEATURES = ["numAtoms", "numBonds", "numGroups", "numAromaticAtoms", "numAromaticBonds", "numInRingAtoms", "numInRingBonds"]
@@ -85,8 +86,16 @@ model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
-model.fit(train_features, train_labels, epochs=10)
+model.fit(train_features, train_labels, epochs=5)
 print()
 
-test_loss, test_acc = model.evaluate(test_features,  test_labels, verbose=2)
+test_loss, test_acc = model.evaluate(test_features, test_labels, verbose=2)
 print('\nTest accuracy:', test_acc)
+
+probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
+
+predictions = probability_model.predict(test_features)
+
+test_pred = np.array(list(map(np.argmax, predictions)))
+print(test_pred[:10])
+print(classification_report(test_labels, test_pred))
