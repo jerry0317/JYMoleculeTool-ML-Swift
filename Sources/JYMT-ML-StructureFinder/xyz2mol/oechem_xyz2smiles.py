@@ -37,6 +37,7 @@ def molobj2features(mol):
     numInRingBonds = len(list(mol.GetBonds(oechem.OEBondIsInRing())))
 
     oechem.OEAssignImplicitHydrogens(mol)
+    oechem.OEAssignHybridization(mol)
 
     numOfSingleBonds = 0
     numOfDoubleBonds = 0
@@ -55,12 +56,28 @@ def molobj2features(mol):
             numOfQuadrupleBonds += 1
 
     numsOfAtomWithImplicitHCount = dict()
+    numsOfAtomWithDegree = dict()
+    numsOfAtomWithExplicitDegree = dict()
+    numsOfAtomWithExplicitValence = dict()
 
     for k in range(9):
         numsOfAtomWithImplicitHCount[k] = 0
+        numsOfAtomWithDegree[k] = 0
+        numsOfAtomWithExplicitDegree[k] = 0
+        numsOfAtomWithExplicitValence[k] = 0
+    
+    numsOfAtomWithHyb = dict()
+
+    for k in range(6):
+        numsOfAtomWithHyb[k] = 0
 
     for atom in mol.GetAtoms():
         numsOfAtomWithImplicitHCount[atom.GetImplicitHCount()] += 1
+        numsOfAtomWithDegree[atom.GetDegree()] += 1
+        numsOfAtomWithExplicitDegree[atom.GetExplicitDegree()] += 1
+        numsOfAtomWithExplicitValence[atom.GetExplicitValence()] += 1
+        numsOfAtomWithHyb[atom.GetHyb()] += 1
+
 
     result = {
         "SMILES": smiles,
@@ -80,6 +97,12 @@ def molobj2features(mol):
 
     for k in range(9):
         result["numsOfAtomWithImplicitHCount" + str(k)] = numsOfAtomWithImplicitHCount[k]
+        result["numsOfAtomWithDegree" + str(k)] = numsOfAtomWithDegree[k]
+        result["numsOfAtomWithExplicitDegree" + str(k)] = numsOfAtomWithExplicitDegree[k]
+        result["numsOfAtomWithExplicitValence" + str(k)] = numsOfAtomWithExplicitValence[k]
+
+    for k in range(6):
+        result["numsOfAtomWithHyb" + str(k)] = numsOfAtomWithHyb[k]
 
     return result
 

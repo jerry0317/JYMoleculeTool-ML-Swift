@@ -29,8 +29,19 @@ FEATURES = [
 "numOfQuadrupleBonds"
 ] + [
 "numsOfAtomWithImplicitHCount" + str(k) for k in range(9)
+] + [
+"numsOfAtomWithDegree" + str(k) for k in range(9)
+] + [
+"numsOfAtomWithExplicitDegree" + str(k) for k in range(9)
+] + [
+"numsOfAtomWithExplicitValence" + str(k) for k in range(9)
+] + [
+"numsOfAtomWithHyb" + str(k) for k in range(6)
 ]
+
 NUM_FEATURES = len(FEATURES)
+
+print("Number of features in use: {}".format(NUM_FEATURES))
 
 def input_csv_reader():
     hold = True
