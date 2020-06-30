@@ -1,4 +1,4 @@
-from openeye import oechem
+from openeye import oechem, oemolprop
 
 # Find the molecule object based on the .xyz input. Return None if nothing found.
 def xyz2molobj(xstr):
@@ -101,6 +101,21 @@ def molobj2features(mol):
         elif atomicNum != 1:
             numOfNonCHAtoms += 1
 
+    mol2dPSA = oemolprop.OEGet2dPSA(mol)
+    molAnionicCarbonCount = oemolprop.OEGetAnionicCarbonCount(mol)
+    molAromaticRingCount = oemolprop.OEGetAromaticRingCount(mol)
+    # molFractionCsp3 = oemolprop.OEGetFractionCsp3(mol)
+    molHalideFraction = oemolprop.OEGetHalideFraction(mol)
+    molHBondAcceptorCount = oemolprop.OEGetHBondAcceptorCount(mol)
+    molHBondDonorCount = oemolprop.OEGetHBondDonorCount(mol)
+    molLipinskiAcceptorCount = oemolprop.OEGetLipinskiAcceptorCount(mol)
+    molLipinskiDonorCount = oemolprop.OEGetLipinskiDonorCount(mol)
+    molLongestUnbranchedHeavyAtomsChain = oemolprop.OEGetLongestUnbranchedHeavyAtomsChain(mol)
+    molLongestUnbranchedCarbonsChain = oemolprop.OEGetLongestUnbranchedCarbonsChain(mol)
+    molNumUnspecifiedAtomStereos = oemolprop.OEGetNumUnspecifiedAtomStereos(mol)
+    molNumUnspecifiedBondStereos = oemolprop.OEGetNumUnspecifiedBondStereos(mol)
+
+    numOfRotorBonds = oemolprop.OEGetRotatableBondCount(mol)
 
     result = {
         "SMILES": smiles,
@@ -117,7 +132,21 @@ def molobj2features(mol):
         "numOfTripleBonds": numOfTripleBonds,
         "numOfQuadrupleBonds": numOfQuadrupleBonds,
         "numOfCAtoms": numOfCAtoms,
-        "numOfNonCHAtoms": numOfNonCHAtoms
+        "numOfNonCHAtoms": numOfNonCHAtoms,
+        "numOfRotorBonds": numOfRotorBonds,
+        "mol2dPSA": mol2dPSA,
+        "molAnionicCarbonCount": molAnionicCarbonCount,
+        "molAromaticRingCount": molAromaticRingCount,
+        # "molFractionCsp3": molFractionCsp3,
+        "molHalideFraction": molHalideFraction,
+        "molHBondAcceptorCount": molHBondAcceptorCount,
+        "molHBondDonorCount": molHBondDonorCount,
+        "molLipinskiAcceptorCount": molLipinskiAcceptorCount,
+        "molLipinskiDonorCount": molLipinskiDonorCount,
+        "molLongestUnbranchedHeavyAtomsChain": molLongestUnbranchedHeavyAtomsChain,
+        "molLongestUnbranchedCarbonsChain": molLongestUnbranchedCarbonsChain,
+        "molNumUnspecifiedAtomStereos": molNumUnspecifiedAtomStereos,
+        "molNumUnspecifiedBondStereos": molNumUnspecifiedBondStereos
     }
 
     for k in range(9):

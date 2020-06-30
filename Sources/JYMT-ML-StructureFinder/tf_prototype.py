@@ -28,7 +28,21 @@ FEATURES = [
 "numOfTripleBonds",
 "numOfQuadrupleBonds",
 "numOfCAtoms",
-"numOfNonCHAtoms"
+"numOfNonCHAtoms",
+"numOfRotorBonds",
+"mol2dPSA",
+"molAnionicCarbonCount",
+"molAromaticRingCount",
+# "molFractionCsp3",
+"molHalideFraction",
+"molHBondAcceptorCount",
+"molHBondDonorCount",
+"molLipinskiAcceptorCount",
+"molLipinskiDonorCount",
+"molLongestUnbranchedHeavyAtomsChain",
+"molLongestUnbranchedCarbonsChain",
+"molNumUnspecifiedAtomStereos",
+"molNumUnspecifiedBondStereos"
 ] + [
 "numsOfAtomWithImplicitHCount" + str(k) for k in range(9)
 ] + [
@@ -90,7 +104,7 @@ def extract_features(dict):
     return np.array([dict[f] for f in FEATURES])
 
 # Print iterations progress
-# Credit:
+# Credit: https://gist.github.com/greenstick/b23e475d2bfdc3a82e34eaa1f6781ee4
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
     """
     Call in a loop to create terminal progress bar
@@ -132,8 +146,6 @@ for i, smiles in enumerate(raw_smiles):
     raw_features.append(xyz2mol.smiles2features(smiles))
     printProgressBar(i + 1, len(raw_smiles), prefix = 'Computing Features:', length = 48)
 
-# raw_features = list(map(xyz2mol.smiles2features, raw_smiles))
-
 # print(raw_features[:1])
 
 for j, i_tr in enumerate(train_indices):
@@ -145,25 +157,21 @@ for j, i_te in enumerate(test_indices):
     test_labels[j] = raw_labels[i_te]
 
 model = keras.Sequential([
-    keras.layers.Dense(8, activation="relu"),
-    keras.layers.Dense(8, activation="relu"),
-    keras.layers.Dense(2)
+    keras.layers.Dense(NUM_FEATURES + 1, activation="relu"),
+    keras.layers.Dense(NUM_FEATURES * 2, activation="relu"),
+    keras.layers.Dense(NUM_FEATURES * 3, activation="relu"),
+    keras.layers.Dense(NUM_FEATURES * 4, activation="relu"),
+    keras.layers.Dense(1, activation="sigmoid")
 ])
 
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-model.fit(train_features, train_labels, epochs=5)
+model.fit(train_features, train_labels, epochs=10)
 print()
 
 test_loss, test_acc = model.evaluate(test_features, test_labels, verbose=2)
 print('\nTest accuracy:', test_acc)
 
-probability_model = tf.keras.Sequential([model, tf.keras.layers.Softmax()])
-
-predictions = probability_model.predict(test_features)
-
-test_pred = np.array(list(map(np.argmax, predictions)))
+test_pred = (model.predict(test_features) > 0.5).astype("int32")
 
 print(classification_report(test_labels, test_pred))
