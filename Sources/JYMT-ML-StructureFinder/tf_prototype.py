@@ -89,6 +89,29 @@ def sample_indices(len, test_ratio):
 def extract_features(dict):
     return np.array([dict[f] for f in FEATURES])
 
+# Print iterations progress
+# Credit:
+def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█', printEnd = "\r"):
+    """
+    Call in a loop to create terminal progress bar
+    @params:
+        iteration   - Required  : current iteration (Int)
+        total       - Required  : total iterations (Int)
+        prefix      - Optional  : prefix string (Str)
+        suffix      - Optional  : suffix string (Str)
+        decimals    - Optional  : positive number of decimals in percent complete (Int)
+        length      - Optional  : character length of bar (Int)
+        fill        - Optional  : bar fill character (Str)
+        printEnd    - Optional  : end character (e.g. "\r", "\r\n") (Str)
+    """
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print(f'\r{prefix} |{bar}| {percent}% {suffix}', end = printEnd)
+    # Print New Line on Complete
+    if iteration == total:
+        print()
+
 raw_smiles, raw_labels = import_from_csv(input_csv_reader())
 
 positive_rate = len(list(filter(lambda x: x == 1, raw_labels))) / len(raw_labels)
@@ -101,8 +124,15 @@ train_features = np.zeros((len(train_indices), NUM_FEATURES))
 train_labels = np.zeros(len(train_indices), dtype=np.uint8)
 test_features = np.zeros((len(test_indices), NUM_FEATURES))
 test_labels = np.zeros(len(test_indices), dtype=np.uint8)
+raw_features = []
 
-raw_features = list(map(xyz2mol.smiles2features, raw_smiles))
+printProgressBar(0, len(raw_smiles), prefix = 'Computing Features:', length = 48)
+
+for i, smiles in enumerate(raw_smiles):
+    raw_features.append(xyz2mol.smiles2features(smiles))
+    printProgressBar(i + 1, len(raw_smiles), prefix = 'Computing Features:', length = 48)
+
+# raw_features = list(map(xyz2mol.smiles2features, raw_smiles))
 
 # print(raw_features[:1])
 
