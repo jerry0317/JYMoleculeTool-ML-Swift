@@ -36,8 +36,10 @@ def molobj2features(mol):
     numInRingAtoms = len(list(mol.GetAtoms(oechem.OEAtomIsInRing())))
     numInRingBonds = len(list(mol.GetBonds(oechem.OEBondIsInRing())))
 
+    # Assign Implicit Hydrogen
     oechem.OEAssignImplicitHydrogens(mol)
     oechem.OEAssignHybridization(mol)
+    oechem.OEAssignFormalCharges(mol)
 
     numOfSingleBonds = 0
     numOfDoubleBonds = 0
@@ -59,24 +61,45 @@ def molobj2features(mol):
     numsOfAtomWithDegree = dict()
     numsOfAtomWithExplicitDegree = dict()
     numsOfAtomWithExplicitValence = dict()
+    numsOfAtomWithHvyDegree = dict()
+    numsOfAtomWithHvyValence = dict()
+    numsOfAtomWithValence = dict()
+
+    numsOfAtomWithFormalCharge = dict()
 
     for k in range(9):
         numsOfAtomWithImplicitHCount[k] = 0
         numsOfAtomWithDegree[k] = 0
         numsOfAtomWithExplicitDegree[k] = 0
         numsOfAtomWithExplicitValence[k] = 0
-    
+        numsOfAtomWithHvyDegree[k] = 0
+        numsOfAtomWithHvyValence[k] = 0
+        numsOfAtomWithValence[k] = 0
+        numsOfAtomWithFormalCharge[k - 4] = 0
+
     numsOfAtomWithHyb = dict()
 
     for k in range(6):
         numsOfAtomWithHyb[k] = 0
+
+    numOfCAtoms = 0
+    numOfNonCHAtoms = 0
 
     for atom in mol.GetAtoms():
         numsOfAtomWithImplicitHCount[atom.GetImplicitHCount()] += 1
         numsOfAtomWithDegree[atom.GetDegree()] += 1
         numsOfAtomWithExplicitDegree[atom.GetExplicitDegree()] += 1
         numsOfAtomWithExplicitValence[atom.GetExplicitValence()] += 1
+        numsOfAtomWithHvyDegree[atom.GetHvyDegree()] += 1
+        numsOfAtomWithHvyValence[atom.GetHvyValence()] += 1
+        numsOfAtomWithValence[atom.GetValence()] += 1
         numsOfAtomWithHyb[atom.GetHyb()] += 1
+        numsOfAtomWithFormalCharge[atom.GetFormalCharge()] += 1
+        atomicNum = atom.GetAtomicNum()
+        if atomicNum == 6:
+            numOfCAtoms += 1
+        elif atomicNum != 1:
+            numOfNonCHAtoms += 1
 
 
     result = {
@@ -92,7 +115,9 @@ def molobj2features(mol):
         "numOfSingleBonds": numOfSingleBonds,
         "numOfDoubleBonds": numOfDoubleBonds,
         "numOfTripleBonds": numOfTripleBonds,
-        "numOfQuadrupleBonds": numOfQuadrupleBonds
+        "numOfQuadrupleBonds": numOfQuadrupleBonds,
+        "numOfCAtoms": numOfCAtoms,
+        "numOfNonCHAtoms": numOfNonCHAtoms
     }
 
     for k in range(9):
@@ -100,6 +125,10 @@ def molobj2features(mol):
         result["numsOfAtomWithDegree" + str(k)] = numsOfAtomWithDegree[k]
         result["numsOfAtomWithExplicitDegree" + str(k)] = numsOfAtomWithExplicitDegree[k]
         result["numsOfAtomWithExplicitValence" + str(k)] = numsOfAtomWithExplicitValence[k]
+        result["numsOfAtomWithHvyDegree" + str(k)] = numsOfAtomWithHvyDegree[k]
+        result["numsOfAtomWithHvyValence" + str(k)] = numsOfAtomWithHvyValence[k]
+        result["numsOfAtomWithValence" + str(k)] = numsOfAtomWithValence[k]
+        result["numsOfAtomWithFormalCharge" + str(k - 4)] = numsOfAtomWithFormalCharge[k - 4]
 
     for k in range(6):
         result["numsOfAtomWithHyb" + str(k)] = numsOfAtomWithHyb[k]

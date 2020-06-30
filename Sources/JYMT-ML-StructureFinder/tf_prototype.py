@@ -26,7 +26,9 @@ FEATURES = [
 "numOfSingleBonds",
 "numOfDoubleBonds",
 "numOfTripleBonds",
-"numOfQuadrupleBonds"
+"numOfQuadrupleBonds",
+"numOfCAtoms",
+"numOfNonCHAtoms"
 ] + [
 "numsOfAtomWithImplicitHCount" + str(k) for k in range(9)
 ] + [
@@ -36,7 +38,15 @@ FEATURES = [
 ] + [
 "numsOfAtomWithExplicitValence" + str(k) for k in range(9)
 ] + [
+"numsOfAtomWithHvyDegree" + str(k) for k in range(9)
+] + [
+"numsOfAtomWithHvyValence" + str(k) for k in range(9)
+] + [
+"numsOfAtomWithValence" + str(k) for k in range(9)
+] + [
 "numsOfAtomWithHyb" + str(k) for k in range(6)
+] + [
+"numsOfAtomWithFormalCharge" + str(k - 4) for k in range(9)
 ]
 
 NUM_FEATURES = len(FEATURES)
