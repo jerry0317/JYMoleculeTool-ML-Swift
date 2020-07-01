@@ -102,7 +102,7 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
             var correctSmiles = ""
             var uniqueSmiles = Set<String>()
             var gCache = GlobalCache()
-            let possibleStructures = findPossibleStructures(from: atoms, cache: &gCache)
+            let possibleStructures = findPossibleStructures(from: atoms, cache: &gCache, rcsFilters: rcsFilters)
             serialQueue.sync {
                 correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
                 uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
