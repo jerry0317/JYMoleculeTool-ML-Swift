@@ -26,11 +26,12 @@ print()
 var (_, writePath) = exportingPathInput("csv", isOptional: false)
 print()
 
-let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN))
+let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1
+print("Note: \(numOfThreads) threads will be used for calculation.")
 
 let tInitial = Date()
 
-let snt = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads)
+let snt = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads, rcsFilters: [.minimumBondLength, .bondTypeLength, .valence])
 let csvUrl = writePath.appendingPathComponent("result_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
 
 exportCsvFile(from: snt, to: csvUrl)

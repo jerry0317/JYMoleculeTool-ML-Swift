@@ -166,7 +166,7 @@ model = keras.Sequential([
 
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-model.fit(train_features, train_labels, epochs=10)
+model.fit(train_features, train_labels, epochs=20)
 print()
 
 test_loss, test_acc = model.evaluate(test_features, test_labels, verbose=2)
