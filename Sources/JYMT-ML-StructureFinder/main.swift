@@ -19,15 +19,16 @@ printWelcomeBanner("Structure Finder w/ ML")
 
 internal let xyz2mol = importXyz2mol()
 
+let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1
+print("Note: \(numOfThreads) threads will be used for calculation.")
+print()
+
 var (xyzFiles, fileNames) = xyzFilesInput()
 print("Successfully imported: \(fileNames.joined(separator: ",")).")
 print()
 
 var (_, writePath) = exportingPathInput("csv", isOptional: false)
 print()
-
-let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1
-print("Note: \(numOfThreads) threads will be used for calculation.")
 
 let tInitial = Date()
 

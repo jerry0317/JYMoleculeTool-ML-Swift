@@ -87,6 +87,7 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
     var snt = [SNTData]()
     let serialQueue = DispatchQueue(label: "SerialQueue")
     let xyzChunked = xyzSets.chunked(by: chunkSize)
+    var numOfXyzProcessed = xyzSets.count
     DispatchQueue.concurrentPerform(iterations: chunkSize, execute: { i in
         var xyzChunk = [XYZFile]()
         serialQueue.sync {
@@ -97,6 +98,9 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
             let atoms = nonHAtoms(from: xyzSet)
             guard Set(atoms.map({$0.element})).isSubset(of: supportedElements) else {
                 print("Found unsupported element. Data set neglected.")
+                serialQueue.sync {
+                    numOfXyzProcessed += -1
+                }
                 continue
             }
             var correctSmiles = ""
@@ -110,6 +114,9 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
             }
         }
     })
+    
+    print("Number of XYZ files processed: \(numOfXyzProcessed)")
+    print("Number of SMILES calculated: \(snt.count)")
     
     return snt
 }
