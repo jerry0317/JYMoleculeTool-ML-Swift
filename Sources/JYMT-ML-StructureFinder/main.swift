@@ -32,7 +32,7 @@ if CommandLine.arguments.count >= 2 {
 }
 
 let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1
-print("Note: \(numOfThreads) threads will be used for calculation.")
+print("Note: ~\(numOfThreads) threads will be used for calculation.")
 print()
 
 var (xyzFiles, fileNames) = xyzFilesInput()
