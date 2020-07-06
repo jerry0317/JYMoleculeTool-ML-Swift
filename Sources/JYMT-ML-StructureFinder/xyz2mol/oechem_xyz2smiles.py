@@ -168,3 +168,6 @@ def smiles2features(sstr):
     mol = oechem.OEGraphMol()
     oechem.OESmilesToMol(mol, sstr)
     return molobj2features(mol)
+
+def nullifyOEThrowStream():
+    oechem.OEThrow.SetOutputStream(oechem.oenul)
