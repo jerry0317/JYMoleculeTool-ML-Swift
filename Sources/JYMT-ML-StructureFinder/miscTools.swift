@@ -89,10 +89,21 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
     var snt = [SNTData]()
     let serialQueue = DispatchQueue(label: "SerialQueue")
     let xyzChunked = xyzSets.chunked(by: chunkSize)
-    var numOfXyzProcessed = 0
+    var numOfInValidXyz = 0
     var numOfValidXyz = 0
     
     let tInitial = Date()
+    
+    func printSntProgress() {
+        #if DEBUG
+        #else
+        let numOfXyzProcessed = numOfValidXyz + numOfInValidXyz
+        let portionCompleted = Double(numOfXyzProcessed) / Double(xyzSets.count)
+        let timeElapsed = -Double(tInitial.timeIntervalSinceNow)
+        let eta = ((1 - portionCompleted) / portionCompleted) * timeElapsed
+        printStringInLine(toPrintWithSpace("Processing: \(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - ETA: \(Int(eta)) s", 60))
+        #endif
+    }
     
     xyz2mol.nullifyOEThrowStream()
     
@@ -104,10 +115,11 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
         
         for xyzSet in xyzChunk {
             let atoms = nonHAtoms(from: xyzSet)
-            serialQueue.sync {
-                numOfXyzProcessed += 1
-            }
             guard Set(atoms.map({$0.element})).isSubset(of: supportedElements) else {
+                serialQueue.sync {
+                    numOfInValidXyz += 1
+                    printSntProgress()
+                }
 //                print("Found unsupported element. Data set neglected.")
                 continue
             }
@@ -120,19 +132,12 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
                 uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
                 snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
                 numOfValidXyz += 1
-                
-                #if DEBUG
-                #else
-                let portionCompleted = Double(numOfXyzProcessed) / Double(xyzSets.count)
-                let timeElapsed = -Double(tInitial.timeIntervalSinceNow)
-                let eta = ((1 - portionCompleted) / portionCompleted) * timeElapsed
-                printStringInLine(toPrintWithSpace("Calculating: \(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - ETA: \(Int(eta)) s", 70))
-                #endif
+                printSntProgress()
             }
         }
     })
     
-    printStringInLine("")
+    print("\n")
     print("Number of valid XYZ files: \(numOfValidXyz)")
     print("Number of SMILES calculated: \(snt.count)")
     print()
