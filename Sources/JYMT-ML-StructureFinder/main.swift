@@ -32,20 +32,20 @@ if CommandLine.arguments.count >= 2 {
 }
 
 let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1
-print("Note: ~\(numOfThreads) threads will be used for calculation.")
-print()
 
 var (xyzFiles, fileNames) = xyzFilesInput()
-print("Successfully imported: \(fileNames.joined(separator: ",")).")
 print()
 
 var (_, writePath) = exportingPathInput("csv", isOptional: false)
 print()
 
+print("Note: ~\(numOfThreads) threads will be used for calculation.")
+print()
+
 let tInitial = Date()
 
 let snt = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads, rcsFilters: rcsFilterUsed)
-let csvUrl = writePath.appendingPathComponent("result_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
+let csvUrl = writePath.appendingPathComponent("results_\(rcsFilterUsed.count)ppf_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
 
 exportCsvFile(from: snt, to: csvUrl)
 
