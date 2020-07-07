@@ -19,7 +19,7 @@ printWelcomeBanner("Structure Finder w/ ML")
 
 internal let xyz2mol = importXyz2mol()
 
-var rcsFilterUsed: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]
+var rcsFilterUsed: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence, .bondAngle, .coplanarity]
 
 if CommandLine.arguments.count >= 2 {
     if CommandLine.arguments.contains("-3ppf") {
@@ -44,10 +44,10 @@ print()
 
 let tInitial = Date()
 
-let snt = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads, rcsFilters: rcsFilterUsed)
+let sntCsv = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads, rcsFilters: rcsFilterUsed)
 let csvUrl = writePath.appendingPathComponent("results_\(rcsFilterUsed.count)ppf_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
 
-exportCsvFile(from: snt, to: csvUrl)
+exportCsvFile(from: sntCsv, to: csvUrl)
 
 let timeTaken = -(Double(tInitial.timeIntervalSinceNow))
 

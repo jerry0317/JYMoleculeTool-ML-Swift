@@ -74,19 +74,17 @@ func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObjec
     return Set(possibleSmiles)
 }
 
-func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> [SNTData] {
-    var smilesNTruths = [SNTData]()
+func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Set<SNTTuple> {
+    var smilesNTruths = Set<SNTTuple>()
     for uSmiles in uniqueSmiles {
-        var dict = SNTData()
-        dict["SMILES"] = uSmiles as AnyObject
-        dict["Validity"] = (uSmiles == correctSmiles ? 1 : 0) as AnyObject
-        smilesNTruths.append(dict)
+        let snt = SNTTuple(uSmiles, uSmiles == correctSmiles)
+        smilesNTruths.insert(snt)
     }
     return smilesNTruths
 }
 
-func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 4, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [SNTData] {
-    var snt = [SNTData]()
+func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 4, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [CSVData] {
+    var snt = Set<SNTTuple>()
     let serialQueue = DispatchQueue(label: "SerialQueue")
     let xyzChunked = xyzSets.chunked(by: chunkSize)
     var numOfInValidXyz = 0
@@ -130,7 +128,7 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
             serialQueue.sync {
                 correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
                 uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
-                snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
+                snt.formUnion(smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
                 numOfValidXyz += 1
                 printSntProgress()
             }
@@ -142,10 +140,10 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
     print("Number of SMILES calculated: \(snt.count)")
     print()
     
-    return snt
+    return snt.map({$0.csvDataFormat})
 }
 
-func exportCsvFile(from snt: [SNTData], to csvUrl: URL) {
+func exportCsvFile(from snt: [CSVData], to csvUrl: URL) {
     var csvFile = TextFile()
     csvFile.content = createCSVString(header: ["SMILES", "Validity"], data: snt)
     csvFile.safelyExport(toFile: csvUrl, affix: "csv")
