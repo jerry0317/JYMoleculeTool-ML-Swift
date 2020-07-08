@@ -132,11 +132,9 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
                     numOfEmptyStrcs += 1
                 } else {
                     correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
-                    if !correctSmilesSet.contains(correctSmiles){
-                        correctSmilesSet.insert(correctSmiles)
-                        uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
-                        snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
-                    }
+                    correctSmilesSet.insert(correctSmiles)
+                    uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
+                    snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
                     numOfValidXyz += 1
                 }
                 printSntProgress()
