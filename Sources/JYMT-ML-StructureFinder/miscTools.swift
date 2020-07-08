@@ -101,7 +101,7 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
         let portionCompleted = Double(numOfXyzProcessed) / Double(xyzSets.count)
         let timeElapsed = -Double(tInitial.timeIntervalSinceNow)
         let eta = ((1 - portionCompleted) / portionCompleted) * timeElapsed
-        printStringInLine(toPrintWithSpace("Processing: \(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - ETA: \(Int(eta)) s", 60))
+        printStringInLine(toPrintWithSpace("Processing: \(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - ETA: \(timeIntervalToString(eta, maximumUnitCount: 2))", 64))
         #endif
     }
     
