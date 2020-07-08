@@ -169,9 +169,12 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 model.fit(train_features, train_labels, epochs=20)
 print()
 
+print("In Raw Data: T: {:.2f}% - F: {:.2f}%".format(positive_rate * 100, (1 - positive_rate) * 100))
+print()
+
 test_loss, test_acc = model.evaluate(test_features, test_labels, verbose=2)
 print('\nTest accuracy:', test_acc)
 
 test_pred = (model.predict(test_features) > 0.5).astype("int32")
 
-print(classification_report(test_labels, test_pred))
+print(classification_report(test_labels, test_pred, labels=[1, 0], target_names=['T', 'F']))
