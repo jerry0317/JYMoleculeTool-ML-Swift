@@ -74,28 +74,30 @@ func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObjec
     return Set(possibleSmiles)
 }
 
-func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Set<SNTTuple> {
-    var smilesNTruths = Set<SNTTuple>()
+func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Array<SNTTuple> {
+    var smilesNTruths = Array<SNTTuple>()
     for uSmiles in uniqueSmiles {
         let snt = SNTTuple(uSmiles, uSmiles == correctSmiles)
-        smilesNTruths.insert(snt)
+        smilesNTruths.append(snt)
     }
     return smilesNTruths
 }
 
 func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 4, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [CSVData] {
-    var snt = Set<SNTTuple>()
+    var snt = Array<SNTTuple>()
+    var correctSmilesSet = Set<String>()
     let serialQueue = DispatchQueue(label: "SerialQueue")
     let xyzChunked = xyzSets.chunked(by: chunkSize)
     var numOfInValidXyz = 0
     var numOfValidXyz = 0
+    var numOfEmptyStrcs = 0
     
     let tInitial = Date()
     
     func printSntProgress() {
         #if DEBUG
         #else
-        let numOfXyzProcessed = numOfValidXyz + numOfInValidXyz
+        let numOfXyzProcessed = numOfValidXyz + numOfInValidXyz + numOfEmptyStrcs
         let portionCompleted = Double(numOfXyzProcessed) / Double(xyzSets.count)
         let timeElapsed = -Double(tInitial.timeIntervalSinceNow)
         let eta = ((1 - portionCompleted) / portionCompleted) * timeElapsed
@@ -126,21 +128,33 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
             var gCache = GlobalCache()
             let possibleStructures = findPossibleStructures(from: atoms, cache: &gCache, rcsFilters: rcsFilters)
             serialQueue.sync {
-                correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
-                uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
-                snt.formUnion(smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
-                numOfValidXyz += 1
+                if possibleStructures.isEmpty {
+                    numOfEmptyStrcs += 1
+                } else {
+                    correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
+                    if !correctSmilesSet.contains(correctSmiles){
+                        correctSmilesSet.insert(correctSmiles)
+                        uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
+                        snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
+                    }
+                    numOfValidXyz += 1
+                }
                 printSntProgress()
             }
         }
     })
     
+    let sntSet = Set(snt)
+    
     print("\n")
+    print("Number of input XYZ files: \(numOfValidXyz + numOfInValidXyz + numOfEmptyStrcs)")
     print("Number of valid XYZ files: \(numOfValidXyz)")
-    print("Number of SMILES calculated: \(snt.count)")
+//    print("Number of SNT entries: \(snt.count)")
+    print("Number of unique compounds: \(correctSmilesSet.count)")
+    print("Number of possible SMILES: \(sntSet.count)")
     print()
     
-    return snt.map({$0.csvDataFormat})
+    return sntSet.map({$0.csvDataFormat})
 }
 
 func exportCsvFile(from snt: [CSVData], to csvUrl: URL) {
