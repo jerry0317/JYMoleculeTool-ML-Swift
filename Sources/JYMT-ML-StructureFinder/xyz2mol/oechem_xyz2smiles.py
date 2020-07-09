@@ -117,6 +117,8 @@ def molobj2features(mol):
 
     numOfRotorBonds = oemolprop.OEGetRotatableBondCount(mol)
 
+    molWeight = oechem.OECalculateMolecularWeight(mol)
+
     result = {
         "SMILES": smiles,
         # "dimension": dimension,
@@ -146,7 +148,8 @@ def molobj2features(mol):
         "molLongestUnbranchedHeavyAtomsChain": molLongestUnbranchedHeavyAtomsChain,
         "molLongestUnbranchedCarbonsChain": molLongestUnbranchedCarbonsChain,
         "molNumUnspecifiedAtomStereos": molNumUnspecifiedAtomStereos,
-        "molNumUnspecifiedBondStereos": molNumUnspecifiedBondStereos
+        "molNumUnspecifiedBondStereos": molNumUnspecifiedBondStereos,
+        "molWeight": molWeight
     }
 
     for k in range(9):

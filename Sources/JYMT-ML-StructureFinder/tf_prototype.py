@@ -42,7 +42,8 @@ FEATURES = [
 "molLongestUnbranchedHeavyAtomsChain",
 "molLongestUnbranchedCarbonsChain",
 "molNumUnspecifiedAtomStereos",
-"molNumUnspecifiedBondStereos"
+"molNumUnspecifiedBondStereos",
+"molWeight"
 ] + [
 "numsOfAtomWithImplicitHCount" + str(k) for k in range(9)
 ] + [
@@ -142,6 +143,7 @@ raw_features = []
 
 printProgressBar(0, len(raw_smiles), prefix = 'Computing Features:', length = 48)
 
+xyz2mol.nullifyOEThrowStream()
 for i, smiles in enumerate(raw_smiles):
     raw_features.append(xyz2mol.smiles2features(smiles))
     printProgressBar(i + 1, len(raw_smiles), prefix = 'Computing Features:', length = 48)
