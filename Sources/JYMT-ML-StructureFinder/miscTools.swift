@@ -74,17 +74,17 @@ func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObjec
     return Set(possibleSmiles)
 }
 
-func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Array<SNTTuple> {
-    var smilesNTruths = Array<SNTTuple>()
+func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Set<SNTTuple> {
+    var smilesNTruths = Set<SNTTuple>()
     for uSmiles in uniqueSmiles {
         let snt = SNTTuple(uSmiles, uSmiles == correctSmiles)
-        smilesNTruths.append(snt)
+        smilesNTruths.insert(snt)
     }
     return smilesNTruths
 }
 
 func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 4, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [CSVData] {
-    var snt = Array<SNTTuple>()
+    var snt = Set<SNTTuple>()
     var correctSmilesSet = Set<String>()
     let serialQueue = DispatchQueue(label: "SerialQueue")
     let xyzChunked = xyzSets.shuffled().chunked(by: chunkSize)
@@ -134,7 +134,7 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
                     correctSmiles = findCorrectSmiles(from: atoms, xyz2mol: xyz2mol)
                     correctSmilesSet.insert(correctSmiles)
                     uniqueSmiles = findPossibleSmiles(from: possibleStructures, xyz2mol: xyz2mol)
-                    snt.append(contentsOf: smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
+                    snt.formUnion(smilesNTruths(uniqueSmiles: uniqueSmiles, correctSmiles: correctSmiles))
                     numOfValidXyz += 1
                 }
                 printSntProgress()
@@ -142,17 +142,14 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
         }
     })
     
-    let sntSet = Set(snt)
-    
     print("\n")
     print("Number of input XYZ files: \(numOfValidXyz + numOfInValidXyz + numOfEmptyStrcs)")
     print("Number of valid XYZ files: \(numOfValidXyz)")
-//    print("Number of SNT entries: \(snt.count)")
     print("Number of unique compounds: \(correctSmilesSet.count)")
-    print("Number of possible SMILES: \(sntSet.count)")
+    print("Number of possible SMILES: \(snt.count)")
     print()
     
-    return sntSet.map({$0.csvDataFormat})
+    return snt.map({$0.csvDataFormat})
 }
 
 func exportCsvFile(from snt: [CSVData], to csvUrl: URL) {
