@@ -80,7 +80,7 @@ def input_csv_reader():
             print("Invalid path. Please try again.")
     return reader
 
-def import_from_csv(reader):
+def import_from_csv(reader, remove_duplicates=True):
     smiles_list = []
     validity_list = []
     line_count = 0
@@ -89,7 +89,13 @@ def import_from_csv(reader):
             smiles_list.append(row[0])
             validity_list.append(int(row[1]))
         line_count += 1
-    print(f'Processed {line_count} lines.')
+    print(f'Processed {line_count} lines from csv file.')
+    if remove_duplicates:
+        snt_list = [(smiles_list[i], validity_list[i]) for i in range(len(smiles_list))]
+        snt_list = list(set(snt_list))
+        smiles_list = [snt_list[i][0] for i in range(len(snt_list))]
+        validity_list = [snt_list[i][1] for i in range(len(snt_list))]
+        print("Found {} unique data entries.".format(len(smiles_list)))
     return smiles_list, validity_list
 
 def sample_indices(len, test_ratio):
@@ -129,7 +135,10 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 
 raw_smiles, raw_labels = import_from_csv(input_csv_reader())
 
-positive_rate = len(list(filter(lambda x: x == 1, raw_labels))) / len(raw_labels)
+num_of_compounds = len(list(filter(lambda x: x == 1, raw_labels)))
+num_of_smiles = len(raw_smiles)
+
+positive_rate = num_of_compounds / len(raw_labels)
 print("Positive rate: ", positive_rate)
 print("Negative rate: ", 1 - positive_rate)
 
@@ -171,7 +180,7 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 model.fit(train_features, train_labels, epochs=20)
 print()
 
-print("In Raw Data: T: {:.2f}% - F: {:.2f}%".format(positive_rate * 100, (1 - positive_rate) * 100))
+print("In Raw Data: {} compounds - {} SMILES - T: {:.2f}% - F: {:.2f}%".format(num_of_compounds, num_of_smiles, positive_rate * 100, (1 - positive_rate) * 100))
 print()
 
 test_loss, test_acc = model.evaluate(test_features, test_labels, verbose=2)
