@@ -157,3 +157,45 @@ func exportCsvFile(from snt: [CSVData], to csvUrl: URL) {
     csvFile.content = createCSVString(header: ["SMILES", "Validity"], data: snt)
     csvFile.safelyExport(toFile: csvUrl, affix: "csv")
 }
+
+func calculationIndexRangeInput(count: Int) -> ClosedRange<Int> {
+    var pass = false
+    var result = 0...(count - 1)
+    while !pass {
+        let inStr = input(name: "calculation range", type: "string", defaultValue: "1-\(count)", printAfterSec: false)
+        if inStr.isEmpty {
+            pass = true
+        } else if !inStr.contains("-") {
+            pass = false
+            print("Illegal format. Please try again.")
+        } else {
+            let strSplit = inStr.split(separator: "-", maxSplits: 1, omittingEmptySubsequences: false)
+            let pstr = strSplit.map({$0.trimmingCharacters(in: .whitespaces)})
+            var startIndex: Int? = nil
+            var endIndex: Int? = nil
+            if pstr[0].isEmpty {
+                startIndex = 0
+            } else {
+                startIndex = Int(pstr[0])
+            }
+            if pstr[1].isEmpty {
+                endIndex = count - 1
+            } else {
+                endIndex = Int(pstr[1])
+            }
+            
+            if (startIndex == nil || endIndex == nil) {
+                pass = false
+                print("Illegal format. Please try again.")
+            } else if (startIndex! <= 0 || endIndex! > count || endIndex! < startIndex!) {
+                pass = false
+                print("Incorrect range. Please try again.")
+            } else {
+                result = (startIndex! - 1)...(endIndex! - 1)
+                pass = true
+            }
+        }
+    }
+    print("The calculation range is set to \(result.first! + 1)-\(result.last! + 1).")
+    return result
+}

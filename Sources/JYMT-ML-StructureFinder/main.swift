@@ -31,21 +31,31 @@ if CommandLine.arguments.count >= 2 {
     }
 }
 
-let numOfThreads = sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1
-
 var (xyzFiles, fileNames) = xyzFilesInput()
+print()
+
+let indexRange = calculationIndexRangeInput(count: xyzFiles.count)
+let xyzFilesToUse = Array(xyzFiles[indexRange])
 print()
 
 var (_, writePath) = exportingPathInput("csv", isOptional: false)
 print()
 
+let numOfThreads = min(sysconf(CInt(_SC_NPROCESSORS_ONLN)) * 2 - 1, xyzFilesToUse.count)
 print("Note: ~\(numOfThreads) threads will be used for calculation.")
 print()
 
 let tInitial = Date()
 
-let sntCsv = sntAction(from: xyzFiles, xyz2mol: xyz2mol, chunkSize: numOfThreads, rcsFilters: rcsFilterUsed)
-let csvUrl = writePath.appendingPathComponent("results_\(rcsFilterUsed.count)ppf_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
+let sntCsv = sntAction(from: xyzFilesToUse, xyz2mol: xyz2mol, chunkSize: numOfThreads, rcsFilters: rcsFilterUsed)
+
+var indexrStr = ""
+if indexRange == 0...(xyzFiles.count - 1) {
+    indexrStr = "All"
+} else {
+    indexrStr = "\(indexRange.first! + 1)-\(indexRange.last! + 1)"
+}
+let csvUrl = writePath.appendingPathComponent("results_\(indexrStr)_\(rcsFilterUsed.count)ppf_" + String(Int(tInitial.timeIntervalSince1970)) + ".csv")
 
 exportCsvFile(from: sntCsv, to: csvUrl)
 
