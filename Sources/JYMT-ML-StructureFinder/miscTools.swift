@@ -13,10 +13,13 @@ import JYMTBasicKit
     import Python
 #endif
 
+/**
+ Import xyz2mol module from Python.
+ */
 func importXyz2mol() -> PythonObject {
     let sys = Python.import("sys")
     guard let xyz2molTemp = try? Python.attemptImport("xyz2mol") else {
-        print("Uhh... Failed to import xyz2mol")
+        print("[Fatal Err] Uhh... Failed to import xyz2mol")
         print("Please install xyz2mol in one of the following paths:")
         let paths = sys.path
         for path in paths {
@@ -29,12 +32,18 @@ func importXyz2mol() -> PythonObject {
     return xyz2molTemp
 }
 
+/**
+ Find the non-H atoms from the xyz set.
+ */
 func nonHAtoms(from xyzSet: XYZFile) -> [Atom] {
     let rawAtoms = xyzSet.atoms!
     let combAtoms = rawAtoms.removed(byElement: .hydrogen)
     return combAtoms
 }
 
+/**
+ Find the correct SMILES for a set of atoms using the xyz2mol module from Python.
+ */
 func findCorrectSmiles(from atoms: [Atom], xyz2mol: PythonObject) -> String {
     guard !atoms.isEmpty else {
         return ""
@@ -45,6 +54,9 @@ func findCorrectSmiles(from atoms: [Atom], xyz2mol: PythonObject) -> String {
     return correctSmiles
 }
 
+/**
+ Find the possible structures for a given set of atoms.
+ */
 func findPossibleStructures(from atoms: [Atom], cache: inout GlobalCache, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence], toPrint: Bool = false) -> [StrcMolecule] {
     guard !atoms.isEmpty else {
         return []
@@ -64,6 +76,9 @@ func findPossibleStructures(from atoms: [Atom], cache: inout GlobalCache, rcsFil
     return possibleList
 }
 
+/**
+ Find the unique SMILES that can be inferred from a given set of structural molecules.
+ */
 func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObject) -> Set<String> {
     var possibleSmiles = [String]()
     for psMol in strcMolecules {
@@ -74,6 +89,9 @@ func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObjec
     return Set(possibleSmiles)
 }
 
+/**
+ Give the set of `SNTTuple` from a given set of SMILES and the correct one.
+ */
 func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Set<SNTTuple> {
     var smilesNTruths = Set<SNTTuple>()
     for uSmiles in uniqueSmiles {
@@ -83,6 +101,9 @@ func smilesNTruths(uniqueSmiles: Set<String>, correctSmiles: String) -> Set<SNTT
     return smilesNTruths
 }
 
+/**
+ The combined action of calculate snt (SMILES and Truth) from a given set of xyz sets using multiprocessing (with `chunkSize` an *approximate* number of threads).
+ */
 func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 4, rcsFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence]) -> [CSVData] {
     var snt = Set<SNTTuple>()
     var correctSmilesSet = Set<String>()
@@ -91,6 +112,9 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
     var numOfInValidXyz = 0
     var numOfValidXyz = 0
     var numOfEmptyStrcs = 0
+    
+    print("Note: \(xyzChunked.count) threads will be used for calculation.")
+    print()
     
     let tInitial = Date()
     
@@ -101,7 +125,7 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
         let portionCompleted = Double(numOfXyzProcessed) / Double(xyzSets.count)
         let timeElapsed = -Double(tInitial.timeIntervalSinceNow)
         let eta = ((1 - portionCompleted) / portionCompleted) * timeElapsed
-        printStringInLine(toPrintWithSpace("Processing: \(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - ETA: \(timeIntervalToString(eta, maximumUnitCount: 2))", 64))
+        printStringInLine(toPrintWithSpace("\(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - Remaining: \(timeIntervalToString(eta, maximumUnitCount: 2))", 64))
         #endif
     }
     
@@ -152,12 +176,18 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
     return snt.map({$0.csvDataFormat})
 }
 
-func exportCsvFile(from snt: [CSVData], to csvUrl: URL) {
+/**
+ Export CSV data to a given file using a given header.
+ */
+func exportCsvFile(from snt: [CSVData], header: [String], to csvUrl: URL) {
     var csvFile = TextFile()
-    csvFile.content = createCSVString(header: ["SMILES", "Validity"], data: snt)
+    csvFile.content = createCSVString(header: header, data: snt)
     csvFile.safelyExport(toFile: csvUrl, affix: "csv")
 }
 
+/**
+ Give the index range of (persumbly) an array of given `count` by user input. For example, if the user input `1-10`, then the index range output will be `0...9`.
+ */
 func calculationIndexRangeInput(count: Int) -> ClosedRange<Int> {
     var pass = false
     var result = 0...(count - 1)
@@ -198,4 +228,18 @@ func calculationIndexRangeInput(count: Int) -> ClosedRange<Int> {
     }
     print("The calculation range is set to \(result.first! + 1)-\(result.last! + 1).")
     return result
+}
+
+func rcsFiltersFromCommandLineArg(defaultFilters: Set<StrcFilter> = [.minimumBondLength, .bondTypeLength, .valence, .bondAngle, .coplanarity]) -> Set<StrcFilter> {
+    var rcsFilterUsed: Set<StrcFilter> = defaultFilters
+    if CommandLine.arguments.count >= 2 {
+        if CommandLine.arguments.contains("-3ppf") {
+            rcsFilterUsed = [.minimumBondLength, .bondTypeLength, .valence]
+            print("[Running with 3 pre-processing filters]\n")
+        } else if CommandLine.arguments.contains("-5ppf") {
+            rcsFilterUsed = [.minimumBondLength, .bondTypeLength, .valence, .bondAngle, .coplanarity]
+            print("[Running with 5 pre-processing filters]\n")
+        }
+    }
+    return rcsFilterUsed
 }
