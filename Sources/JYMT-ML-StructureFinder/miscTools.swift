@@ -48,7 +48,7 @@ func findCorrectSmiles(from atoms: [Atom], xyz2mol: PythonObject) -> String {
     guard !atoms.isEmpty else {
         return ""
     }
-    
+
     let xyzString = XYZFile(fromAtoms: atoms).xyzString!
     let correctSmiles = String(xyz2mol.xyz2smiles(xyzString))!
     return correctSmiles
@@ -70,9 +70,9 @@ func findPossibleStructures(from atoms: [Atom], cache: inout GlobalCache, rcsFil
     let initialSMol = StrcMolecule(Set([A1]))
 
     var possibleList: [StrcMolecule] = []
-    
+
     possibleList = rcsActionDynProgrammed(rAtoms: combrAtoms, stMolList: [initialSMol], filters: rcsFilters, toPrint: toPrint, cache: &cache)
-    
+
     return possibleList
 }
 
@@ -85,7 +85,7 @@ func findPossibleSmiles(from strcMolecules: [StrcMolecule], xyz2mol: PythonObjec
         let smiles = String(xyz2mol.xyz2smiles(XYZFile(fromAtoms: Array(psMol.atoms)).xyzString!))!
         possibleSmiles.append(smiles)
     }
-    
+
     return Set(possibleSmiles)
 }
 
@@ -112,12 +112,12 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
     var numOfInValidXyz = 0
     var numOfValidXyz = 0
     var numOfEmptyStrcs = 0
-    
+
     print("Note: \(xyzChunked.count) threads will be used for calculation.")
     print()
-    
+
     let tInitial = Date()
-    
+
     func printSntProgress() {
         #if DEBUG
         #else
@@ -128,15 +128,15 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
         printStringInLine(toPrintWithSpace("Processing: \(numOfXyzProcessed)/\(xyzSets.count) - \((portionCompleted * 100).rounded(digitsAfterDecimal: 1)) % - Remaining: \(timeIntervalToString(eta, maximumUnitCount: 2))", 64))
         #endif
     }
-    
+
     xyz2mol.nullifyOEThrowStream()
-    
+
     DispatchQueue.concurrentPerform(iterations: xyzChunked.count, execute: { i in
         var xyzChunk = [XYZFile]()
         serialQueue.sync {
             xyzChunk = xyzChunked[i]
         }
-        
+
         for xyzSet in xyzChunk {
             let atoms = nonHAtoms(from: xyzSet)
             guard Set(atoms.map({$0.element})).isSubset(of: supportedElements) else {
@@ -165,14 +165,14 @@ func sntAction(from xyzSets: [XYZFile], xyz2mol: PythonObject, chunkSize: Int = 
             }
         }
     })
-    
+
     print("\n")
     print("Number of input XYZ files: \(numOfValidXyz + numOfInValidXyz + numOfEmptyStrcs)")
     print("Number of valid XYZ files: \(numOfValidXyz)")
     print("Number of unique compounds: \(correctSmilesSet.count)")
     print("Number of possible SMILES: \(snt.count)")
     print()
-    
+
     return snt.map({$0.csvDataFormat})
 }
 
@@ -209,11 +209,11 @@ func calculationIndexRangeInput(count: Int) -> ClosedRange<Int> {
                 startIndex = Int(pstr[0])
             }
             if pstr[1].isEmpty {
-                endIndex = count - 1
+                endIndex = count
             } else {
                 endIndex = Int(pstr[1])
             }
-            
+
             if (startIndex == nil || endIndex == nil) {
                 pass = false
                 print("Illegal format. Please try again.")

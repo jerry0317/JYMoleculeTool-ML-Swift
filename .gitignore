@@ -108,3 +108,4 @@ Utilities/Docker/*.tar.gz
 Package.resolved
 /build
 *.pyc
+JYMT-ML-StructureFinder
